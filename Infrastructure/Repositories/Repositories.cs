@@ -1,4 +1,4 @@
-using Mapster;
+	using Mapster;
 using Microsoft.EntityFrameworkCore;
 using CleanApi.Core.Interfaces;
 using CleanApi.Core.Models;
@@ -7,30 +7,27 @@ using CleanApi.Infrastructure.Entities;
 
 namespace CleanApi.Infrastructure.Repositories;
 
-public class CustomerRepository : ICustomerRepository
+public class LookupRepository<TEntity, TModel> : ILookupRepository<TModel> 
+    where TEntity : class 
+    where TModel : class
 {
     private readonly AppDbContext _context;
-    public CustomerRepository(AppDbContext context) => _context = context;
 
-    public async Task<CustomerModel> GetByNameAsync(string name) => 
-        await _context.Customers
+    public LookupRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<TModel> FindAsync(Expression<Func<TModel, bool>> predicate)
+    {
+        return await _context.Set<TEntity>()
             .AsNoTracking()
-            .Where(c => c.FullName == name)
-            .ProjectToType<CustomerModel>()
+            // Mapster creates an IQueryable of TModel, allowing EF Core to map the SQL directly
+            .ProjectToType<TModel>()
+            // We apply the expression to the translated query
+            .Where(predicate)
             .FirstOrDefaultAsync();
-}
-
-public class StatusRepository : IStatusRepository
-{
-    private readonly AppDbContext _context;
-    public StatusRepository(AppDbContext context) => _context = context;
-
-    public async Task<StatusModel> GetByNameAsync(string name) => 
-        await _context.OrderStatusLookups
-            .AsNoTracking()
-            .Where(s => s.StatusName == name)
-            .ProjectToType<StatusModel>()
-            .FirstOrDefaultAsync();
+    }
 }
 
 public class OrderRepository : IOrderRepository

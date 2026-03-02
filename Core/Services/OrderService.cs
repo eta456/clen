@@ -5,23 +5,29 @@ namespace CleanApi.Core.Services;
 
 public class OrderService : IOrderService
 {
-    private readonly IOrderRepository _orderRepository;
-    private readonly ICustomerRepository _customerRepository;
-    private readonly IStatusRepository _statusRepository;
+    private readonly IOrderRepository _orderRepository; // We keep the specific one for full CRUD
+    private readonly ILookupRepository<CustomerModel> _customerLookup;
+    private readonly ILookupRepository<StatusModel> _statusLookup;
 
-    public OrderService(IOrderRepository orderRepo, ICustomerRepository customerRepo, IStatusRepository statusRepo)
+	// We inject the INTERFACES, never the concrete classes
+    public OrderService(
+        IOrderRepository orderRepo, 
+        ILookupRepository<CustomerModel> customerLookup, 
+        ILookupRepository<StatusModel> statusLookup)
     {
         _orderRepository = orderRepo;
-        _customerRepository = customerRepo;
-        _statusRepository = statusRepo;
+        _customerLookup = customerLookup;
+        _statusLookup = statusLookup;
     }
 
     public async Task<OrderModel> CreateOrderAsync(CreateOrderModel createModel)
     {
-        var customer = await _customerRepository.GetByNameAsync(createModel.CustomerName);
+        // The service just calls the interface method. 
+        // The Dependency Injection container handles routing this to the actual database class.
+        var customer = await _customerLookup.FindAsync(c => c.Name == createModel.CustomerName);
         if (customer == null) throw new ArgumentException($"Customer '{createModel.CustomerName}' not found.");
 
-        var status = await _statusRepository.GetByNameAsync(createModel.StatusName);
+        var status = await _statusLookup.FindAsync(s => s.Name == createModel.StatusName);
         if (status == null) throw new ArgumentException($"Status '{createModel.StatusName}' not found.");
 
         var newOrder = OrderModel.CreateNew(customer.Id, status.Name, createModel.TotalAmount);
