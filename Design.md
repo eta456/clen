@@ -52,7 +52,7 @@ To illustrate the separation of concerns, here is the lifecycle of a data creati
 
 To visualise the separation of concerns, we rely on logical architecture diagrams rather than physical database schemas. This highlights the direction of dependencies and the flow of data through the application.
 
-
+![Architecture Diagram](unnamed.jpg)
 
 ### 5.1 The Dependency Inversion Flow
 * **The Core:** Sits at the absolute centre of the system. It contains no external references.
